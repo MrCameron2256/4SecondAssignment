@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4 Second Assignment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .startButton {
+            font-size: 24px;
+            padding: 60px 240px;
+            border-radius: 16px;}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center mt-5">4 Second Challenge</h1>
+    <h2 class="text-center mt-5">Try to keep the timer running for as close to 4 seconds as possible</h2>
+    <br>
+    <h3 class ="text-center mt-5">Good luck!</h3>
+    <div class="d-flex justify-content-center mt-4">
+        <button id="startStopBtn" class="btn btn-lg btn-primary startButton">Start</button>
+    </div>
+    <div id="result" class="text-center mt-4"></div>
+    <div id="stats" class="mt-4"></div>
+    <canvas id="attemptsChart" class="mt-4"></canvas>
+</div>
+<script>
+    var timeGoal = 4000;
+    var blueTime = 200;
+    var yellowTime = 500;
+    var startTime;
+    var isRunning = false;
+    var attempts = [];
+    var attemptsChartData;
+    var button = document.getElementById("startStopBtn");
+    var result = document.getElementById("result");
+    var stats = document.getElementById("stats");
+    var attemptsChart = document.getElementById("attemptsChart");
+
+    button.onclick = function() {
+        if (!isRunning) {
+            startTime = new Date().getTime();
+            button.textContent = "Stop";
+            result.innerHTML = "";
+        } else {
+            var stopTime = new Date().getTime();
+            var elapsedTime = stopTime - startTime;
+            var diff = Math.abs(elapsedTime - timeGoal);
+            var color;
+
+            if (elapsedTime === timeGoal) {
+                color = "success";
+            } else if (diff <= blueTime) {
+                color = "primary";
+            } else if (diff <= yellowTime) {
+                color = "warning";
+            } else {
+                color = "danger";
+            }
+
+            result.innerHTML = '<span class="badge bg-' + color + '">' + (elapsedTime / 1000) + ' seconds</span>';
+            button.textContent = "Start";
+
+            attempts.push({ start: startTime, stop: stopTime });
+            updateStats();
+            updateAttemptsChart();
+        }
+        isRunning = !isRunning;
+    };
+
+    function updateStats() {
+        var totalAttempts = attempts.length;
+        var min = Infinity;
+        var max = -Infinity;
+        var sum = 0;
+
+        for (var i = 0; i < attempts.length; i++) {
+            var time = attempts[i].stop - attempts[i].start;
+            sum += time;
+            if (time < min) {
+                min = time;
+            }
+            if (time > max) {
+                max = time;
+            }
+        }
+
+        var avg = sum / totalAttempts;
+
+
+        stats.innerHTML = `
+                <h5>Challenge Stats:</h5>
+                <p>Total Attempts: ${totalAttempts}</p>
+                <p>Minimum Time: ${min / 1000} seconds</p>
+                <p>Maximum Time: ${max / 1000} seconds</p>
+                <p>Average Time: ${(avg / 1000).toFixed(2)} seconds</p>
+                <h3 class="text-center mt-5">Stats Chart</h3>
+            `;
+
+    }
+
+
+    function updateAttemptsChart() {
+        var chartData = {
+            labels: [],
+            datasets: [{
+                label: "Elapsed Time (seconds)",
+                data: [],
+                borderColor: "rgb(98,255,227,0.68)",
+                backgroundColor: "rgba(0,0,0)",
+            }],
+        };
+
+        for (var i = 0; i < attempts.length; i++) {
+            chartData.labels.push(i + 1);
+            chartData.datasets[0].data.push((attempts[i].stop - attempts[i].start) / 1000);
+        }
+
+
+        if (!attemptsChartData) {
+            attemptsChartData = new Chart(attemptsChart, {
+                type: "line",
+                data: chartData,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+        } else {
+            attemptsChartData.data.labels = chartData.labels;
+            attemptsChartData.data.datasets[0].data = chartData.datasets[0].data;
+            attemptsChartData.update();
+        }
+    }
+</script>
+</body>
+</html>
